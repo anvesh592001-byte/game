@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>AETHER DRIFT — Smooth 2D Remake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ambient"></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">◈</div>
+        <div>
+          <h1>AETHER DRIFT</h1>
+          <p id="levelLabel">WORLD MAP — SELECT A LEVEL <span>• v2.5 Smooth 2D</span></p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="pill" id="btnMap">🗺 Map</button>
+        <button class="pill ghost" id="btnSkin">🎨 Skins</button>
+        <button class="pill ghost" id="btnPause">⏸ Pause <em>[P]</em></button>
+        <button class="pill ghost" id="btnRestart">↻ Restart <em>[R]</em></button>
+        <button class="pill ghost" id="btnSound">🔊 Sound On</button>
+      </div>
+    </header>
+
+    <div class="stage-wrap">
+      <div class="stage" id="stage">
+        <canvas id="game" width="1280" height="720"></canvas>
+
+        <div class="hud">
+          <div class="hud-left">
+            <div class="stat">
+              <span class="icon">◆</span>
+              <b id="hudCoins">0</b><small id="hudCoinsTotal">/12</small>
+            </div>
+            <div class="stat">
+              <span class="icon heart">♥</span>
+              <div class="hearts" id="hudHearts"></div>
+            </div>
+            <div class="stat time">
+              <span class="icon">◷</span>
+              <b id="hudTime">00:00</b>
+            </div>
+            <div class="stat wallhint" id="wallHint" style="display:none">🧗 Wall Jump Ready</div>
+          </div>
+          <div class="hud-right">
+            <div class="hud-dash">
+              <span>DASH</span>
+              <div class="dash-bar"><i id="dashFill"></i></div>
+            </div>
+            <div class="hud-progress">
+              <span id="hudProgressLabel">0%</span>
+              <div class="prog"><i id="hudProgress"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="center-msg" id="centerMsg"></div>
+
+        <!-- WORLD MAP / START -->
+        <div class="overlay show" id="overlayStart">
+          <div class="card map-card">
+            <div class="badge">✦ v2.5 • SMOOTH 60FPS • 2 LEVELS • WALL JUMP • 4 SKINS</div>
+            <h2>AETHER<br><span>DRIFT</span></h2>
+            <p class="subtitle">A smooth 2D platformer. Play as <b>Kiko</b> & friends — dash, wall-jump and soar through floating worlds. All graphics are procedural vector — no images.</p>
+            
+            <div class="level-grid">
+              <button class="level-card active" data-level="1">
+                <div class="lvl-thumb t1"></div>
+                <div class="lvl-info">
+                  <strong>01 — VERDANT ASCENT</strong>
+                  <span>Floating Gardens • 5 sections • 12 shards</span>
+                  <div class="lvl-meta"><i>Easy</i> <em id="best1">—</em></div>
+                </div>
+                <div class="lvl-play">▶ PLAY</div>
+              </button>
+              <button class="level-card" data-level="2" id="card2">
+                <div class="lvl-thumb t2"></div>
+                <div class="lvl-info">
+                  <strong>02 — CRYSTAL SPIRES</strong>
+                  <span>Twilight Cavern • Wall Jump • Fragile Crystals</span>
+                  <div class="lvl-meta"><i>Medium</i> <em id="best2">Locked — beat Level 1</em></div>
+                </div>
+                <div class="lvl-play">🔒</div>
+              </button>
+            </div>
+
+            <div class="hero-preview">
+              <div class="char-card pick" data-skin="kiko"><div class="char-art kiko"></div><strong>KIKO</strong><span>Default • Cyan scarf</span></div>
+              <div class="char-card" data-skin="nova"><div class="char-art nova"></div><strong>NOVA</strong><span>Spark • Magenta</span></div>
+              <div class="char-card" data-skin="yuki"><div class="char-art yuki"></div><strong>YUKI</strong><span>Frost • Ice blue</span></div>
+              <div class="char-card" data-skin="ember"><div class="char-art ember"></div><strong>EMBER</strong><span>Blaze • Orange</span></div>
+            </div>
+            <p class="hint">Pick a skin → Pick a level → GO! Skins change trail & scarf. Level 2 unlocks after beating Level 1.</p>
+
+            <div class="controls-grid">
+              <div><kbd>A</kbd><kbd>D</kbd> Move</div>
+              <div><kbd>W</kbd>/<kbd>SPACE</kbd> Jump</div>
+              <div><kbd>SHIFT</kbd> Dash</div>
+              <div><kbd>W</kbd> near wall → Wall Jump</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Character Skin Overlay -->
+        <div class="overlay" id="overlaySkin">
+          <div class="card">
+            <h3>🎨 Choose Explorer</h3>
+            <p>All skins play the same — pure style. Trail & scarf change.</p>
+            <div class="skin-grid">
+              <button class="skin-opt active" data-skin="kiko"><span class="dot kiko"></span><b>KIKO</b><small>Cyan • Explorer</small></button>
+              <button class="skin-opt" data-skin="nova"><span class="dot nova"></span><b>NOVA</b><small>Magenta • Spark</small></button>
+              <button class="skin-opt" data-skin="yuki"><span class="dot yuki"></span><b>YUKI</b><small>Ice • Frost</small></button>
+              <button class="skin-opt" data-skin="ember"><span class="dot ember"></span><b>EMBER</b><small>Orange • Blaze</small></button>
+            </div>
+            <button class="cta" id="btnSkinClose">Done</button>
+          </div>
+        </div>
+
+        <div class="overlay" id="overlayPause">
+          <div class="card">
+            <h3>⏸ Paused</h3>
+            <p>Take a breath. The aether waits.</p>
+            <div class="row">
+              <button class="cta" id="btnResume">Resume</button>
+              <button class="pill ghost" id="btnRestart2">Restart</button>
+            </div>
+            <button class="pill ghost" style="margin-top:10px;width:100%" id="btnToMap2">🗺 Back to Map</button>
+          </div>
+        </div>
+
+        <div class="overlay" id="overlayWin">
+          <div class="card win-card">
+            <div class="confetti"></div>
+            <h3 id="winTitle">✦ PORTAL REACHED ✦</h3>
+            <h2 id="winLevelName">LEVEL COMPLETE!</h2>
+            <div class="stats-grid">
+              <div><b id="winTime">00:00</b><span>Time</span></div>
+              <div><b id="winCoins">0/12</b><span>Star Shards</span></div>
+              <div><b id="winGrade">S</b><span>Grade</span></div>
+            </div>
+            <p id="winMsg">Flawless flow!</p>
+            <div class="row">
+              <button class="cta" id="btnAgain">↻ Replay</button>
+              <button class="cta" id="btnNext" style="background:linear-gradient(135deg,#ffce6b,#ff8a7a);color:#2b1a00">Next Level →</button>
+            </div>
+            <button class="pill ghost" style="margin-top:10px" id="btnToMap">🗺 World Map</button>
+          </div>
+        </div>
+
+        <div class="overlay" id="overlayDead">
+          <div class="card">
+            <h3>♥ Oops!</h3>
+            <p>Kiko took a tumble. Try again?</p>
+            <div class="row">
+              <button class="cta" id="btnRetry">↻ Retry</button>
+              <button class="pill ghost" id="btnToMap3">Map</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="touch" id="touch">
+          <div class="t-left">
+            <button class="tbtn" id="tLeft">‹</button>
+            <button class="tbtn" id="tRight">›</button>
+          </div>
+          <div class="t-right">
+            <button class="tbtn act" id="tJump">⤒</button>
+            <button class="tbtn act dash" id="tDash">⚡</button>
+          </div>
+        </div>
+      </div>
+      <div class="stage-shadow"></div>
+    </div>
+
+    <section class="info">
+      <div class="info-card">
+        <h4>✦ v2.5 — Continued Work</h4>
+        <ul>
+          <li><b>New Level 02 — Crystal Spires:</b> twilight cavern, wall-slide & wall-jump, fragile crystal platforms, lantern enemies, dash-refill crystals</li>
+          <li><b>4 Redesigned Skins:</b> Kiko, Nova, Yuki, Ember — each with unique scarf/trail/antenna glow & smooth squash-stretch</li>
+          <li><b>World Map + Save:</b> best time & shard record saved in browser, Level 2 unlocks after beating Level 1</li>
+          <li><b>Graphics+</b>: volumetric fog, crystal bloom, cave parallax, wall-slide particles & screen dust</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h4>◆ How to Master It</h4>
+        <div class="sections">
+          <span><i>01</i> Meadow Hop</span>
+          <span><i>02</i> Wind Platforms</span>
+          <span><i>03</i> Bloom Climb</span>
+          <span><i>04</i> Crystal Spires (New)</span>
+        </div>
+        <p class="small"><b>New in Level 2:</b> Hold <kbd>A</kbd>/<kbd>D</kbd> against a wall to <b>slide slowly</b>, then press <kbd>Jump</kbd> to <b>wall-jump</b> away. Fragile crystals crack then shatter — keep moving! Touch cyan crystals to refill dash.</p>
+        <div class="controls-grid" style="margin-top:10px">
+          <div>🧗 Wall Slide → Wall Jump</div>
+          <div>💎 Fragile → Don't linger</div>
+          <div>🔷 Dash Crystal → Refill</div>
+          <div>🏆 Beat Lv1 → Unlock Lv2</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>Built with HTML5 Canvas • All vector procedural • <kbd>H</kbd> hide HUD • <kbd>M</kbd> mute • Skins saved automatically</footer>
+  </div>
+<script src="game.js"></script>
+</body>
+</html>
