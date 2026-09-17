@@ -25,6 +25,13 @@ const IMG = {
     bg_chamber: 'assets/backgrounds/bg_chamber.jpg',
     bg_citadel: 'assets/backgrounds/bg_citadel.jpg',
     bg_dawn: 'assets/backgrounds/bg_dawn.jpg',
+    // --- gameplay sprite sheets (chroma-keyed, 8 poses each) ---
+    sprites_aditya: 'assets/characters/aditya/sprites.png',
+    sprites_arjun: 'assets/characters/arjun/sprites.png',
+    sprites_ravi: 'assets/characters/ravi/sprites.png',
+    sprites_kiran: 'assets/characters/kiran/sprites.png',
+    // --- boss splash art ---
+    boss_unbound: 'assets/bosses/vyomasura_unbound_splash.jpg',
     // --- UI ---
     icons: 'assets/ui/icons/ability_icons.jpg',
     menu_group: 'assets/ui/menus/menu_group_art.jpg',

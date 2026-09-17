@@ -343,6 +343,32 @@ class Game {
   }
   onBossIntro(boss) {
     this.toast(boss.D.name + ' — AWAKENED');
+    if (boss.type === 'vyomasuraUnbound') this.bossSplash = { t: 0, dur: 3.4, key: 'boss_unbound', name: boss.D.name };
+  }
+  drawBossSplash(ctx, dt) {
+    const bs = this.bossSplash;
+    if (!bs) return;
+    bs.t += dt;
+    const p = bs.t / bs.dur;
+    if (p >= 1) { this.bossSplash = null; return; }
+    if (typeof IMG === 'undefined' || !IMG.has(bs.key)) return;
+    const a = p < 0.12 ? p / 0.12 : p > 0.8 ? Math.max(0, (1 - p) / 0.2) : 1;
+    ctx.save();
+    ctx.globalAlpha = a;
+    const z = 1 + p * 0.07;
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    IMG.drawCover(ctx, bs.key, (W - W * z) / 2, (H - H * z) / 2, W * z, H * z, 0.5, 0.4);
+    const vg = ctx.createLinearGradient(0, H * 0.6, 0, H);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.85)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ff5560'; ctx.font = 'bold 20px Georgia';
+    ctx.fillText('FINAL BATTLE', W / 2, H - 130);
+    const grad = ctx.createLinearGradient(0, H - 116, 0, H - 66);
+    grad.addColorStop(0, '#ffb0b8'); grad.addColorStop(1, '#c02050');
+    ctx.fillStyle = grad; ctx.font = 'bold 44px Georgia';
+    ctx.fillText(bs.name, W / 2, H - 78);
+    ctx.restore();
   }
   onBossPhase(boss) {
     this.toast(`${boss.D.name} — PHASE ${boss.phase}`);
@@ -457,6 +483,7 @@ class Game {
         UI.drawSubtitle(ctx, this.subs[0], this.t);
         UI.drawToasts(ctx, dt);
         this.drawIntroCard(ctx, dt);
+        this.drawBossSplash(ctx, dt);
         if (Input.hit('pause') && !this.cine.active) {
           this.state = 'pause'; UI.pauseIdx = 0; Audio2.sfx('pause');
         }
@@ -488,8 +515,8 @@ class Game {
       case 'gamedone': {
         // final celebration screen → credits roll
         this.gameDoneT += dt;
-        UI.drawTitleBG(ctx, this.t);
-        ctx.fillStyle = 'rgba(4,3,10,0.5)'; ctx.fillRect(0, 0, W, H);
+        if (!(typeof IMG !== 'undefined' && IMG.drawCover(ctx, 'cine_finale', 0, 0, W, H, 0.5, 0.4))) UI.drawTitleBG(ctx, this.t);
+        ctx.fillStyle = 'rgba(4,3,10,0.45)'; ctx.fillRect(0, 0, W, H);
         ctx.textAlign = 'center';
         const grad = ctx.createLinearGradient(0, 160, 0, 260);
         grad.addColorStop(0, '#ffe9b0'); grad.addColorStop(1, '#e07820');

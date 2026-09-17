@@ -291,12 +291,13 @@ class Player extends Actor {
       ctx.strokeStyle = `rgba(255,190,90,${0.4 + Math.sin(this.t * 6) * 0.2})`; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(0, -55, 58, 0, TAU); ctx.stroke();
     }
-    Art.hero(ctx, this.id, {
+    const stP = {
       pose: this.dead ? 'kneel' : this.pose, t: this.t, vx: this.vx, vy: this.vy,
       facing: this.facing, attackT: Math.max(0, this.attackT),
       emotion: this.dead ? 'pain' : this.emotion, powered: this.powered,
       blink: this.blinkT < 0.12,
-    });
+    };
+    if (!(typeof SpriteArt !== 'undefined' && SpriteArt.hero(ctx, this.id, stP))) Art.hero(ctx, this.id, stP);
     ctx.restore();
   }
 }
@@ -418,11 +419,12 @@ class Companion extends Actor {
       ctx.strokeStyle = `rgba(255,190,90,${0.35 + Math.sin(this.t * 6) * 0.18})`; ctx.lineWidth = 2.4;
       ctx.beginPath(); ctx.arc(0, -52, 54, 0, TAU); ctx.stroke();
     }
-    Art.hero(ctx, this.id, {
+    const stC = {
       pose: this.pose, t: this.t, vx: this.vx, vy: this.vy, facing: this.facing,
       attackT: Math.max(0, this.attackT), emotion: this.emotion,
       powered: this.powered, blink: this.blinkT < 0.12,
-    });
+    };
+    if (!(typeof SpriteArt !== 'undefined' && SpriteArt.hero(ctx, this.id, stC))) Art.hero(ctx, this.id, stC);
     ctx.restore();
   }
 }
