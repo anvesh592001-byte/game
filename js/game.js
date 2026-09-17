@@ -51,6 +51,18 @@ class CinematicEngine {
     } else if (s.narrator) {
       this.narr = { text: s.narrator, age: 0 };
       this.wait = Math.max(2.6, s.narrator.length * 0.055);
+    } else if (s.action === 'img') {
+      // IMAGE-BASED CINEMATIC STORYBOARD BEAT — sharp art, slow camera drift
+      this.board = {
+        key: s.img, age: 0, dur: s.t || 3.6,
+        zoomFrom: s.zoomFrom || 1.0, zoomTo: s.zoomTo || 1.08,
+        panFrom: s.panFrom !== undefined ? s.panFrom : 0.42,
+        panTo: s.panTo !== undefined ? s.panTo : 0.58,
+      };
+      this.wait = s.t || 3.6;
+    } else if (s.action === 'imgClear') {
+      this.board = null;
+      this.wait = 0.05;
     } else if (s.action === 'wait') {
       this.wait = s.t;
     } else if (s.action === 'title') {
@@ -128,6 +140,7 @@ class CinematicEngine {
     if (this.fadeDir) { this.fade = clamp(this.fade + this.fadeDir * dt, 0, 1); if (this.fade === 0 || this.fade === 1) this.fadeDir = 0; }
     // allow skip of individual line
     if (Input.hit('confirm') && this.stepT > 0.4) { this.stepT = this.wait; }
+    if (this.board) this.board.age += dt;
     if (this.stepT >= this.wait) {
       if (this.narr) this.narr = null;
       if (this.titleCard) this.titleCard = null;
@@ -136,11 +149,30 @@ class CinematicEngine {
   }
   end() {
     this.active = false;
-    this.narr = null; this.titleCard = null;
+    this.narr = null; this.titleCard = null; this.board = null; this.boardHold = false;
     const cb = this.onDone; this.onDone = null;
     if (cb) cb();
   }
   draw(ctx) {
+    // storyboard image beat — full-screen SHARP artwork with slow drift
+    if (this.board && typeof IMG !== 'undefined' && IMG.has(this.board.key)) {
+      const b = this.board;
+      const p = clamp(b.age / b.dur, 0, 1);
+      const z = lerp(b.zoomFrom, b.zoomTo, ease(p));
+      const pan = lerp(b.panFrom, b.panTo, ease(p));
+      const dw = W * z, dh = H * z;
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+      const drew = IMG.drawCover(ctx, b.key, (W - dw) / 2, (H - dh) / 2, dw, dh, pan, 0.45);
+      if (drew) {
+        // gentle edge vignette only — image itself stays sharp
+        const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.42, W / 2, H / 2, H * 0.95);
+        vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.5)');
+        ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+        // fade in/out at beat boundaries
+        const fadeIn = Math.min(1, b.age * 2.5);
+        if (fadeIn < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fadeIn})`; ctx.fillRect(0, 0, W, H); }
+      }
+    }
     if (this.flash) {
       ctx.fillStyle = `rgba(${this.flash.c},${Math.max(0, this.flash.a)})`;
       ctx.fillRect(0, 0, W, H);
@@ -192,6 +224,7 @@ class Game {
     this.ctx = this.canvas.getContext('2d');
     SaveSys.load();
     Input.init();
+    if (typeof IMG !== 'undefined') IMG.preloadAll();
     this.state = 'title'; // title, menu, charselect, opening, play, pause, death, levelcomplete, gamedone
     this.cine = new CinematicEngine(this);
     this.level = null;
@@ -250,9 +283,43 @@ class Game {
     UI.screen = 'game';
     Audio2.play(this.level.def.music);
     this.subs = [];
+    // LEVEL TITLE CARD — level's own environment artwork + tip
+    this.introCard = { t: 0, dur: 3.2, idx };
     const cs = this.level.def.cineStart;
     if (cs) this.cine.play(cs);
     this.saveProgress();
+  }
+  drawIntroCard(ctx, dt) {
+    const ic = this.introCard;
+    if (!ic) return;
+    ic.t += dt;
+    const p = ic.t / ic.dur;
+    if (p >= 1) { this.introCard = null; return; }
+    const a = p < 0.15 ? p / 0.15 : p > 0.78 ? Math.max(0, (1 - p) / 0.22) : 1;
+    const def = LEVELS[ic.idx];
+    ctx.save();
+    ctx.globalAlpha = a;
+    const hasArt = typeof IMG !== 'undefined' && IMG.has(levelBgKey(def));
+    ctx.fillStyle = hasArt ? '#000' : 'rgba(0,0,0,0.82)';
+    ctx.fillRect(0, 0, W, H);
+    // level environment artwork, slow zoom, SHARP
+    if (hasArt) {
+      const z = 1 + p * 0.06;
+      IMG.drawCover(ctx, levelBgKey(def), (W - W * z) / 2, (H - H * z) / 2, W * z, H * z, 0.5, 0.4);
+      const vg = ctx.createLinearGradient(0, H * 0.5, 0, H);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.8)');
+      ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+    }
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd98a'; ctx.font = 'bold 20px Georgia';
+    ctx.fillText(`LEVEL ${String(ic.idx + 1).padStart(2, '0')} — PHASE ${def.phase}`, W / 2, H - 170);
+    const grad = ctx.createLinearGradient(0, H - 150, 0, H - 100);
+    grad.addColorStop(0, '#ffe9b0'); grad.addColorStop(1, '#e07820');
+    ctx.fillStyle = grad; ctx.font = 'bold 46px Georgia';
+    ctx.fillText(def.name, W / 2, H - 116);
+    ctx.fillStyle = 'rgba(245,234,208,0.7)'; ctx.font = 'italic 14px Georgia';
+    ctx.fillText('TIP: ' + LEVEL_TIPS[ic.idx % LEVEL_TIPS.length], W / 2, H - 74);
+    ctx.restore();
   }
   saveProgress() {
     SaveSys.data.character = this.heroId;
@@ -389,6 +456,7 @@ class Game {
         this.cine.draw(ctx);
         UI.drawSubtitle(ctx, this.subs[0], this.t);
         UI.drawToasts(ctx, dt);
+        this.drawIntroCard(ctx, dt);
         if (Input.hit('pause') && !this.cine.active) {
           this.state = 'pause'; UI.pauseIdx = 0; Audio2.sfx('pause');
         }

@@ -15,7 +15,27 @@ const UI = {
   font(s, bold) { return `${bold ? 'bold ' : ''}${s}px Verdana, sans-serif`; },
 
   drawTitleBG(ctx, t) {
-    // festival night gradient + silhouette skyline + idol glow
+    // IMAGE-FIRST: painted festival night artwork with slow cinematic pan
+    if (typeof IMG !== 'undefined') {
+      const pan = 0.5 + Math.sin(t * 0.05) * 0.35;
+      if (IMG.drawCover(ctx, 'bg_festival_night', 0, 0, W, H, pan, 0.45)) {
+        // readability grade
+        ctx.fillStyle = 'rgba(8,6,20,0.45)'; ctx.fillRect(0, 0, W, H);
+        const vg0 = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.9);
+        vg0.addColorStop(0, 'rgba(0,0,0,0)'); vg0.addColorStop(1, 'rgba(0,0,0,0.6)');
+        ctx.fillStyle = vg0; ctx.fillRect(0, 0, W, H);
+        // floating warm particles keep it alive
+        const r9 = makeRng(13);
+        for (let i = 0; i < 14; i++) {
+          const px = (r9() * W + t * (12 + r9() * 20)) % W;
+          const py = H * 0.25 + Math.sin(t * 0.7 + i * 2) * 60 + r9() * H * 0.45;
+          ctx.fillStyle = `rgba(245,166,35,${0.3 + Math.sin(t + i) * 0.16})`;
+          ctx.beginPath(); ctx.ellipse(px, py, 4, 2.2, Math.sin(t + i), 0, TAU); ctx.fill();
+        }
+        return;
+      }
+    }
+    // fallback: festival night gradient + silhouette skyline + idol glow
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#0d0f2e'); g.addColorStop(0.6, '#2a1e48'); g.addColorStop(1, '#4a2a3a');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -84,34 +104,66 @@ const UI = {
   MENU: ['PLAY', 'CHARACTERS', 'STORY', 'SETTINGS', 'CONTROLS', 'CREDITS', 'QUIT'],
   drawMenu(ctx, t, game) {
     this.drawTitleBG(ctx, t);
-    ctx.textAlign = 'center';
-    const grad = ctx.createLinearGradient(0, 60, 0, 120);
+    // RIGHT SIDE — generated group artwork of the four friends
+    const groupOk = typeof IMG !== 'undefined' && IMG.has('menu_group');
+    if (groupOk) {
+      const aw = 560, ah = 480;
+      const ax = W - aw - 46, ay = H - ah - 60 + Math.sin(t * 0.8) * 4;
+      ctx.save();
+      const gg = ctx.createRadialGradient(ax + aw / 2, ay + ah / 2, 60, ax + aw / 2, ay + ah / 2, 380);
+      gg.addColorStop(0, 'rgba(255,180,64,0.14)'); gg.addColorStop(1, 'rgba(255,180,64,0)');
+      ctx.fillStyle = gg; ctx.fillRect(ax - 80, ay - 60, aw + 160, ah + 120);
+      rr(ctx, ax, ay, aw, ah, 18); ctx.clip();
+      IMG.drawCover(ctx, 'menu_group', ax, ay, aw, ah, 0.5, 0.35);
+      ctx.restore();
+      rr(ctx, ax, ay, aw, ah, 18);
+      ctx.strokeStyle = 'rgba(255,180,64,0.5)'; ctx.lineWidth = 2; ctx.stroke();
+    } else if (typeof IMG !== 'undefined') {
+      // fallback: four master figures side-by-side
+      HERO_IDS.forEach((id, i) => {
+        const fh = 380, fw = fh * 0.42;
+        IMG.draw(ctx, 'hero_' + id, W - 620 + i * 140, H - fh - 60 + Math.sin(t + i) * 4, fw, fh, CROPS.heroFigure);
+      });
+    }
+    // LEFT SIDE — title + menu
+    ctx.textAlign = 'left';
+    const grad = ctx.createLinearGradient(0, 60, 0, 150);
     grad.addColorStop(0, '#ffe9b0'); grad.addColorStop(1, '#e07820');
-    ctx.fillStyle = grad; ctx.font = this.fontTitle(42);
-    ctx.fillText('GANESH CHATURTHI: THE LAST NIGHT', W / 2, 100);
+    ctx.fillStyle = grad; ctx.font = this.fontTitle(44);
+    ctx.fillText('GANESH CHATURTHI', 70, 110);
+    ctx.fillStyle = '#f5ead0'; ctx.font = this.fontTitle(26);
+    ctx.fillText('THE LAST NIGHT', 70, 148);
+    ctx.strokeStyle = 'rgba(255,180,64,0.5)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(70, 168); ctx.lineTo(500, 168); ctx.stroke();
     const hasSave = SaveSys.data.level > 0 || SaveSys.data.character;
     this.MENU.forEach((m, i) => {
-      const y = 210 + i * 58;
+      const y = 232 + i * 56;
       const sel = i === this.menuIdx;
       let label = m;
       if (m === 'PLAY' && hasSave) label = `CONTINUE — LEVEL ${Math.min(24, SaveSys.data.level + 1)}`;
       if (sel) {
-        rr(ctx, W / 2 - 240, y - 30, 480, 44, 10);
-        ctx.fillStyle = 'rgba(255,180,64,0.16)'; ctx.fill();
+        const pulse = 4 + Math.sin(t * 4) * 2;
+        // custom-shaped button: angled banner
+        ctx.beginPath();
+        ctx.moveTo(56, y - 26); ctx.lineTo(470 + pulse, y - 26);
+        ctx.lineTo(488 + pulse, y - 6); ctx.lineTo(470 + pulse, y + 14);
+        ctx.lineTo(56, y + 14); ctx.closePath();
+        ctx.fillStyle = 'rgba(255,180,64,0.17)'; ctx.fill();
         ctx.strokeStyle = '#ffb340'; ctx.lineWidth = 1.5; ctx.stroke();
-        ctx.fillStyle = '#ffb340'; ctx.font = this.font(20, true);
-        ctx.fillText('❖  ' + label + '  ❖', W / 2, y);
+        ctx.fillStyle = '#ffb340'; ctx.font = this.font(19, true);
+        ctx.fillText('▶  ' + label, 78, y);
       } else {
-        ctx.fillStyle = 'rgba(245,234,208,0.7)'; ctx.font = this.font(18);
-        ctx.fillText(label, W / 2, y);
+        ctx.fillStyle = 'rgba(245,234,208,0.68)'; ctx.font = this.font(17);
+        ctx.fillText(label, 78, y);
       }
     });
     if (hasSave && this.menuIdx === 0) {
-      ctx.fillStyle = 'rgba(245,234,208,0.45)'; ctx.font = this.font(12);
-      ctx.fillText('Hold BACKSPACE on PLAY to start a NEW GAME (wipes progress)', W / 2, 210 + 7 * 58);
+      ctx.fillStyle = 'rgba(245,234,208,0.45)'; ctx.font = this.font(11);
+      ctx.fillText('Hold BACKSPACE on PLAY for NEW GAME (wipes progress)', 78, 232 + 7 * 56);
     }
     ctx.fillStyle = 'rgba(245,234,208,0.4)'; ctx.font = this.font(12);
-    ctx.fillText('W/S — navigate    ENTER/J — select    ESC — back', W / 2, H - 28);
+    ctx.fillText('W/S — navigate    ENTER/J — select    ESC — back', 70, H - 28);
+    ctx.textAlign = 'center';
   },
   menuInput(game) {
     if (Input.hit('jump') || Input.pressed['ArrowUp'] || Input.pressed['KeyW']) { this.menuIdx = (this.menuIdx + this.MENU.length - 1) % this.MENU.length; Audio2.sfx('ui'); }
@@ -154,16 +206,29 @@ const UI = {
       ctx.fill();
       ctx.strokeStyle = sel ? '#ffb340' : 'rgba(255,255,255,0.14)';
       ctx.lineWidth = sel ? 2.5 : 1; ctx.stroke();
-      // character render — idle pose, victory anim if selected
-      ctx.save();
-      ctx.translate(x, y0 + 320);
-      ctx.scale(1.6, 1.6);
-      Art.hero(ctx, id, {
-        pose: sel ? (this.selAnimT > 0 ? 'victory' : 'idle') : 'idle',
-        t: t + i * 1.7, facing: 1, emotion: sel ? 'happy' : 'neutral',
-        powered: sel && this.selAnimT > 0, blink: Math.sin(t * 0.9 + i * 3) > 0.97,
-      });
-      ctx.restore();
+      // character render — generated master artwork (image-first), vector fallback
+      const figH = 300 + (sel ? 14 + Math.sin(t * 3) * 4 : 0);
+      const figW = figH * 0.42;
+      let drew = false;
+      if (typeof IMG !== 'undefined') {
+        if (sel) {
+          const gg = ctx.createRadialGradient(x, y0 + 200, 20, x, y0 + 200, 180);
+          gg.addColorStop(0, C.aura + '3a'); gg.addColorStop(1, C.aura + '00');
+          ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(x, y0 + 200, 180, 0, TAU); ctx.fill();
+        }
+        drew = IMG.draw(ctx, 'hero_' + id, x - figW / 2, y0 + 345 - figH, figW, figH, CROPS.heroFigure);
+      }
+      if (!drew) {
+        ctx.save();
+        ctx.translate(x, y0 + 320);
+        ctx.scale(1.6, 1.6);
+        Art.hero(ctx, id, {
+          pose: sel ? (this.selAnimT > 0 ? 'victory' : 'idle') : 'idle',
+          t: t + i * 1.7, facing: 1, emotion: sel ? 'happy' : 'neutral',
+          powered: sel && this.selAnimT > 0, blink: Math.sin(t * 0.9 + i * 3) > 0.97,
+        });
+        ctx.restore();
+      }
       // name plate
       ctx.fillStyle = sel ? '#ffb340' : '#f5ead0';
       ctx.font = this.font(22, true);
@@ -225,6 +290,17 @@ const UI = {
         rr(ctx, x, y, 120, 92, 8);
         ctx.fillStyle = sel ? 'rgba(255,180,64,0.18)' : done ? 'rgba(120,220,150,0.09)' : unlocked ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)';
         ctx.fill();
+        // level environment thumbnail (generated art per location)
+        if (unlocked && typeof IMG !== 'undefined' && typeof levelBgKey !== 'undefined') {
+          ctx.save();
+          rr(ctx, x, y, 120, 92, 8); ctx.clip();
+          // pan varies per level so same-theme levels still read differently
+          IMG.drawCover(ctx, levelBgKey(LEVELS[li]), x, y, 120, 92, (li % 8) / 7, 0.42);
+          ctx.fillStyle = sel ? 'rgba(20,12,4,0.4)' : 'rgba(10,8,18,0.55)';
+          ctx.fillRect(x, y, 120, 92);
+          ctx.restore();
+        }
+        rr(ctx, x, y, 120, 92, 8);
         ctx.strokeStyle = sel ? '#ffb340' : done ? 'rgba(120,220,150,0.5)' : 'rgba(255,255,255,0.12)';
         ctx.lineWidth = sel ? 2 : 1; ctx.stroke();
         ctx.fillStyle = unlocked ? '#f5ead0' : 'rgba(245,234,208,0.25)';
@@ -408,12 +484,16 @@ const UI = {
     rr(ctx, 16, 14, 320, 86, 12);
     ctx.fillStyle = 'rgba(10,8,20,0.62)'; ctx.fill();
     ctx.strokeStyle = 'rgba(255,180,64,0.4)'; ctx.lineWidth = 1.5; ctx.stroke();
-    // portrait
+    // portrait — generated art crop, vector fallback
     ctx.save();
     rr(ctx, 24, 22, 70, 70, 10); ctx.clip();
     ctx.fillStyle = '#241a30'; ctx.fillRect(24, 22, 70, 70);
-    ctx.translate(59, 148); ctx.scale(1.15, 1.15);
-    Art.hero(ctx, p.id, { pose: 'idle', t: lvl.scene.t, facing: 1, emotion: p.emotion, powered: false });
+    let drewP = false;
+    if (typeof IMG !== 'undefined') drewP = IMG.draw(ctx, 'hero_' + p.id, 24, 22, 70, 70, CROPS.heroPortrait);
+    if (!drewP) {
+      ctx.translate(59, 148); ctx.scale(1.15, 1.15);
+      Art.hero(ctx, p.id, { pose: 'idle', t: lvl.scene.t, facing: 1, emotion: p.emotion, powered: false });
+    }
     ctx.restore();
     rr(ctx, 24, 22, 70, 70, 10); ctx.strokeStyle = C.aura; ctx.lineWidth = 2; ctx.stroke();
     // name
@@ -466,6 +546,30 @@ const UI = {
     ctx.fillStyle = 'rgba(245,234,208,0.35)'; ctx.font = this.font(10);
     ctx.fillText('ESC — Pause', W - 30, H - 12);
 
+    // --- ability icon bar (generated icon art) ---
+    if (typeof IMG !== 'undefined' && IMG.has('icons')) {
+      const row = HERO_IDS.indexOf(p.id); // one icon row per hero on the sheet
+      const keys = [Input.keyName('attack'), Input.keyName('special'), Input.keyName('ultimate'), Input.keyName('dash')];
+      const ready = [true, p.en >= 25 && p.specialCd <= 0 && p.powered, p.ultCharge >= 100 && p.powered, p.dashCd <= 0];
+      const bossUp = lvl.boss && !lvl.boss.dead && lvl.bossActive;
+      const byBase = bossUp ? H - 150 : H - 66; // move above boss bar during boss fights
+      const bx0 = W / 2 - 2 * 58 + 4;
+      for (let i = 0; i < 4; i++) {
+        const bx = bx0 + i * 58, by = byBase;
+        rr(ctx, bx, by, 48, 48, 9);
+        ctx.fillStyle = 'rgba(10,8,20,0.65)'; ctx.fill();
+        ctx.save(); rr(ctx, bx + 2, by + 2, 44, 44, 8); ctx.clip();
+        ctx.globalAlpha = ready[i] ? 1 : 0.35;
+        IMG.draw(ctx, 'icons', bx + 2, by + 2, 44, 44, { sx: i * 0.25, sy: row * 0.25, sw: 0.25, sh: 0.25 });
+        ctx.restore(); ctx.globalAlpha = 1;
+        ctx.strokeStyle = ready[i] ? (i === 2 && p.ultCharge >= 100 ? `rgba(255,${190 + Math.sin(lvl.scene.t * 8) * 60},80,1)` : 'rgba(255,180,64,0.55)') : 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = i === 2 && ready[2] ? 2.5 : 1.5;
+        rr(ctx, bx, by, 48, 48, 9); ctx.stroke();
+        ctx.fillStyle = 'rgba(245,234,208,0.85)'; ctx.font = this.font(9, true); ctx.textAlign = 'center';
+        ctx.fillText(keys[i], bx + 24, by + 60);
+      }
+    }
+
     // --- boss bar ---
     if (lvl.boss && !lvl.boss.dead && lvl.bossActive) {
       const b = lvl.boss;
@@ -503,6 +607,23 @@ const UI = {
     ctx.fillStyle = 'rgba(8,6,16,0.78)'; ctx.fill();
     const col = sub.who === 'VYOMASURA' ? '#c46bff' : sub.hero ? CHARS[sub.hero].aura : '#ffd98a';
     ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+    // speaker portrait (generated art) beside the box
+    if (typeof IMG !== 'undefined') {
+      const ps = Math.max(58, boxH);
+      const px = W / 2 - bw / 2 - ps - 12, py = y0 + boxH - ps;
+      let key = null, crop = null;
+      if (sub.hero) { key = 'hero_' + sub.hero; crop = CROPS.heroPortrait; }
+      else if (sub.who === 'VYOMASURA') { key = 'vyomasura'; crop = CROPS.vyoFace; }
+      if (key) {
+        ctx.save();
+        rr(ctx, px, py, ps, ps, 10); ctx.clip();
+        ctx.fillStyle = '#17111f'; ctx.fillRect(px, py, ps, ps);
+        IMG.draw(ctx, key, px, py, ps, ps, crop);
+        ctx.restore();
+        rr(ctx, px, py, ps, ps, 10);
+        ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+    }
     ctx.textAlign = 'center';
     ctx.fillStyle = col; ctx.font = this.font(size * 0.72, true);
     ctx.fillText(sub.who, W / 2, y0 + 22);

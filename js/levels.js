@@ -396,7 +396,7 @@ class Level {
     this.game = game;
     this.index = index;
     this.def = LEVELS[index];
-    this.scene = new Scene({ ...this.def, seed: index * 17 + 3 });
+    this.scene = new Scene({ ...this.def, seed: index * 17 + 3, bgKey: (typeof levelBgKey !== 'undefined') ? levelBgKey(this.def) : null });
     this.parts = new Particles();
     this.mood = this.def.mood || 'neutral';
     this.camX = 0; this.camY = 0; this.shakeT = 0; this.shakeMag = 0;

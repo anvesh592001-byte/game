@@ -34,7 +34,7 @@ sandbox.window = sandbox;
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 
-const files = ['util.js', 'audio.js', 'art.js', 'world.js', 'entities.js', 'dialogue.js', 'levels.js', 'ui.js', 'game.js'];
+const files = ['util.js', 'assets.js', 'audio.js', 'art.js', 'world.js', 'entities.js', 'dialogue.js', 'levels.js', 'ui.js', 'game.js'];
 for (const f of files) {
   const code = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8');
   vm.runInContext(code, sandbox, { filename: f });

@@ -602,9 +602,23 @@ class Scene {
 
   drawSky(ctx, camX) {
     const th = this.theme;
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, th.sky[0]); g.addColorStop(0.55, th.sky[1]); g.addColorStop(1, th.sky[2]);
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // IMAGE-FIRST: painted background art with parallax pan
+    this.bgImgDrawn = false;
+    if (typeof IMG !== 'undefined' && this.def.bgKey) {
+      const pan = 0.15 + 0.7 * clamp(camX / Math.max(1, this.width - W), 0, 1);
+      if (IMG.drawCover(ctx, this.def.bgKey, 0, 0, W, H, pan, 0.4)) {
+        this.bgImgDrawn = true;
+        // gentle grade so gameplay layer reads over the painting
+        const gg = ctx.createLinearGradient(0, H * 0.55, 0, H);
+        gg.addColorStop(0, 'rgba(8,6,16,0)'); gg.addColorStop(1, 'rgba(8,6,16,0.55)');
+        ctx.fillStyle = gg; ctx.fillRect(0, H * 0.55, W, H * 0.45);
+      }
+    }
+    if (!this.bgImgDrawn) {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, th.sky[0]); g.addColorStop(0.55, th.sky[1]); g.addColorStop(1, th.sky[2]);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
     // stars
     if (th.stars) {
       const r3 = makeRng(99);
@@ -616,14 +630,14 @@ class Scene {
       }
       ctx.globalAlpha = 1;
     }
-    if (th.sun) {
+    if (th.sun && !this.bgImgDrawn) {
       const s = th.sun;
       const gg = ctx.createRadialGradient(W * s.x, H * s.y, 4, W * s.x, H * s.y, s.r * 3);
       gg.addColorStop(0, s.c); gg.addColorStop(0.35, s.c + '66'); gg.addColorStop(1, s.c + '00');
       ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(W * s.x, H * s.y, s.r * 3, 0, TAU); ctx.fill();
       ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(W * s.x, H * s.y, s.r, 0, TAU); ctx.fill();
     }
-    if (th.moon) {
+    if (th.moon && !this.bgImgDrawn) {
       const m = th.moon;
       ctx.fillStyle = m.dim ? '#8a86a0' : '#e8e4d8';
       ctx.beginPath(); ctx.arc(W * m.x, H * m.y, 30, 0, TAU); ctx.fill();
@@ -663,6 +677,7 @@ class Scene {
   }
 
   drawHills(ctx, camX) {
+    if (this.bgImgDrawn) return; // painted art already provides distant landscape
     const th = this.theme;
     // far hills (parallax 0.1)
     ctx.fillStyle = th.hills2;
@@ -699,7 +714,7 @@ class Scene {
 
   drawMidBuildings(ctx, camX) {
     const th = this.theme;
-    if (this.def.noMidStrip) return;
+    if (this.def.noMidStrip || this.bgImgDrawn) return;
     for (const b of this.bgStrip) {
       const sx = b.x - camX * 0.5;
       if (sx < -250 || sx > W + 250) continue;
