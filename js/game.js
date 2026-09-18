@@ -499,6 +499,7 @@ class Game {
         if (UI.screen === 'menu') { UI.drawMenu(ctx, this.t, this); UI.menuInput(this); }
         else if (UI.screen === 'characters') { UI.drawCharSelect(ctx, this.t, this, false); UI.charSelectInput(this, false); }
         else if (UI.screen === 'story') { UI.drawStory(ctx, this.t, this); UI.storyInput(this); }
+        else if (UI.screen === 'bestiary') { UI.drawBestiary(ctx, this.t); UI.bestiaryInput(); }
         else if (UI.screen === 'settings') { UI.drawSettings(ctx, this.t); UI.settingsInput(this); }
         else if (UI.screen === 'controls') { UI.drawControls(ctx, this.t); UI.controlsInput(this); }
         else if (UI.screen === 'credits') { UI.drawCredits(ctx, this.t); if (Input.hit('pause') || Input.hit('confirm')) { UI.screen = 'menu'; Audio2.sfx('uiBack'); } }

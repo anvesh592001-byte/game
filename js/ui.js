@@ -101,7 +101,28 @@ const UI = {
     ctx.fillText('A 2D cinematic action-adventure of four friends, one festival, and one last night.', W / 2, H - 46);
   },
 
-  MENU: ['PLAY', 'CHARACTERS', 'STORY', 'SETTINGS', 'CONTROLS', 'CREDITS', 'QUIT'],
+  // painted-art backdrop for menu screens: image + dark grade, never blurred
+  drawArtBackdrop(ctx, key, t, dark = 0.62, panSpeed = 0.008) {
+    let drew = false;
+    if (typeof IMG !== 'undefined') {
+      const pan = 0.5 + Math.sin(t * panSpeed * 6) * 0.06;
+      drew = IMG.drawCover(ctx, key, 0, 0, W, H, pan, 0.42);
+    }
+    if (!drew) {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#0d0a1c'); g.addColorStop(1, '#241630');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    } else {
+      ctx.fillStyle = `rgba(7,5,16,${dark})`; ctx.fillRect(0, 0, W, H);
+      const vg = ctx.createLinearGradient(0, 0, 0, H);
+      vg.addColorStop(0, 'rgba(4,3,10,0.55)'); vg.addColorStop(0.25, 'rgba(4,3,10,0)');
+      vg.addColorStop(0.8, 'rgba(4,3,10,0)'); vg.addColorStop(1, 'rgba(4,3,10,0.6)');
+      ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+    }
+    return drew;
+  },
+
+  MENU: ['PLAY', 'CHARACTERS', 'STORY', 'BESTIARY', 'SETTINGS', 'CONTROLS', 'CREDITS', 'QUIT'],
   drawMenu(ctx, t, game) {
     this.drawTitleBG(ctx, t);
     // RIGHT SIDE — generated group artwork of the four friends
@@ -175,6 +196,7 @@ const UI = {
       if (m === 'PLAY') game.startPlayFlow();
       else if (m === 'CHARACTERS') { this.screen = 'characters'; this.charIdx = 0; }
       else if (m === 'STORY') { this.screen = 'story'; this.levelIdx = 0; }
+      else if (m === 'BESTIARY') { this.screen = 'bestiary'; this.bestIdx = 0; }
       else if (m === 'SETTINGS') { this.screen = 'settings'; this.settingIdx = 0; }
       else if (m === 'CONTROLS') { this.screen = 'controls'; this.controlIdx = 0; }
       else if (m === 'CREDITS') this.screen = 'credits';
@@ -184,9 +206,7 @@ const UI = {
 
   // ---------------- CHARACTER SELECT ----------------
   drawCharSelect(ctx, t, game, selectMode) {
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#100c22'); g.addColorStop(1, '#2c1a30');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    this.drawArtBackdrop(ctx, 'bg_festival_evening', t, 0.68);
     // decorative lights
     ctx.save(); ctx.translate(W / 2, 26); Props.fairyLights(ctx, W * 0.95, t, false); ctx.restore();
     ctx.textAlign = 'center';
@@ -267,9 +287,7 @@ const UI = {
 
   // ---------------- STORY / LEVEL SELECT ----------------
   drawStory(ctx, t, game) {
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#0d0a1c'); g.addColorStop(1, '#241630');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    this.drawArtBackdrop(ctx, 'bg_storm_night', t, 0.74);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffb340'; ctx.font = this.fontTitle(30);
     ctx.fillText('STORY — THREE PHASES, 24 LEVELS', W / 2, 60);
@@ -330,6 +348,77 @@ const UI = {
     if (Input.hit('pause')) { Audio2.sfx('uiBack'); this.screen = 'menu'; }
   },
 
+  // ---------------- BESTIARY (art gallery of threats) ----------------
+  bestIdx: 0,
+  BESTIARY: [
+    { key: 'enemy_shadowRunner', name: 'SHADOW RUNNER', cls: 'Common — fast melee', desc: 'Chaala fast ga vastadu. Weak, kaani gumpulu ga dangerous. Dodge cheyyandi, counter cheyyandi.' },
+    { key: 'enemy_ashWarrior', name: 'ASH WARRIOR', cls: 'Common — armed melee', desc: 'Ash and embers tho techina soldier. Sword swings slow kaani strong. Block or jump over.' },
+    { key: 'enemy_stoneGuardian', name: 'STONE GUARDIAN', cls: 'Heavy — slow tank', desc: 'Temple stone tho kattina golem. Heavy hits, thick armor. Behind nunchi kotte try cheyyandi.' },
+    { key: 'enemy_shadowArcher', name: 'SHADOW ARCHER', cls: 'Ranged — kiter', desc: 'Duramga undi energy arrows vestadu. Close avvagane venaki velipothadu. Dash tho close the gap.' },
+    { key: 'enemy_corruptedBeast', name: 'CORRUPTED BEAST', cls: 'Beast — pouncer', desc: 'Okkappudu street animal. Ippudu shadow predator. Pounce ki ready ga undandi.' },
+    { key: 'enemy_voidMage', name: 'VOID MAGE', cls: 'Ranged — homing caster', desc: 'Void orbs follow avuthai — running alone saripodhu. Orbs ni kottandi leda cover teesukondi.' },
+    { key: 'enemy_eliteGuardian', name: 'ELITE GUARDIAN', cls: 'Elite — halberd + shield', desc: 'Vyomasura personal guard. Strongest common enemy. Full concentration kavali.' },
+    { key: 'boss_fallen', name: 'FALLEN GUARDIAN', cls: 'BOSS — Level 15', desc: 'Temple ni kapadina guardian... ippudu corruption lo padipoyadu. Tragic, powerful, relentless.' },
+    { key: 'boss_shadowbeast', name: 'SHADOW BEAST', cls: 'BOSS — forest apex', desc: 'Forest lo respawn ayye shadow ki king. Massive, fast, ruthless.' },
+    { key: 'boss_templeguardian', name: 'TEMPLE GUARDIAN', cls: 'BOSS — the trial', desc: 'Corrupted kaadu — test chestunnadu. Nalugu chetulatho sacred trial istadu. Prove yourselves.' },
+    { key: 'vyomasura', name: 'VYOMASURA', cls: 'THE FORGOTTEN GUARDIAN', desc: 'Vega deva senapathi. Betrayal tho seal ayyadu. Ippudu... the last night begins.', crop: 'vyoFull' },
+    { key: 'boss_unbound', name: 'VYOMASURA — THE UNBOUND', cls: 'FINAL BOSS — Level 24', desc: 'Full power. Full rage. Five stages. Andaru kalisi nilabadali — the final fight.' },
+  ],
+  drawBestiary(ctx, t) {
+    this.drawArtBackdrop(ctx, 'bg_corrupted', t, 0.78);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#b48cff'; ctx.font = this.fontTitle(30);
+    ctx.fillText('BESTIARY — THREATS OF THE LAST NIGHT', W / 2, 58);
+    const e = this.BESTIARY[this.bestIdx];
+    // big artwork panel (left)
+    const ax = 70, ay = 92, aw = 560, ah = 520;
+    ctx.save();
+    rr(ctx, ax, ay, aw, ah, 14); ctx.clip();
+    ctx.fillStyle = '#0c0918'; ctx.fillRect(ax, ay, aw, ah);
+    if (typeof IMG !== 'undefined') {
+      if (e.crop && typeof CROPS !== 'undefined' && CROPS[e.crop]) IMG.draw(ctx, e.key, ax + aw / 2 - 170, ay + 10, 340, ah - 20, CROPS[e.crop]);
+      else IMG.drawCover(ctx, e.key, ax, ay, aw, ah, 0.5, 0.4);
+    }
+    const vg = ctx.createLinearGradient(0, ay + ah - 110, 0, ay + ah);
+    vg.addColorStop(0, 'rgba(6,4,14,0)'); vg.addColorStop(1, 'rgba(6,4,14,0.85)');
+    ctx.fillStyle = vg; ctx.fillRect(ax, ay, aw, ah);
+    ctx.restore();
+    rr(ctx, ax, ay, aw, ah, 14);
+    ctx.strokeStyle = 'rgba(160,95,255,0.5)'; ctx.lineWidth = 2; ctx.stroke();
+    // info (right)
+    const ix = 690;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#f2e9ff'; ctx.font = this.fontTitle(30);
+    ctx.fillText(e.name, ix, 160);
+    ctx.fillStyle = '#b48cff'; ctx.font = this.font(14, true);
+    ctx.fillText(e.cls, ix, 190);
+    ctx.fillStyle = 'rgba(235,225,255,0.8)'; ctx.font = this.font(14);
+    wrapText(ctx, e.desc, 470).forEach((ln, i) => ctx.fillText(ln, ix, 232 + i * 24));
+    // thumbnails strip
+    this.BESTIARY.forEach((b, i) => {
+      const tx = ix + (i % 6) * 82, ty = 380 + Math.floor(i / 6) * 82;
+      const sel = i === this.bestIdx;
+      ctx.save(); rr(ctx, tx, ty, 70, 70, 8); ctx.clip();
+      if (typeof IMG !== 'undefined') IMG.drawCover(ctx, b.key, tx, ty, 70, 70, 0.5, 0.3);
+      if (!sel) { ctx.fillStyle = 'rgba(8,6,16,0.45)'; ctx.fillRect(tx, ty, 70, 70); }
+      ctx.restore();
+      rr(ctx, tx, ty, 70, 70, 8);
+      ctx.strokeStyle = sel ? '#b48cff' : 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = sel ? 2.5 : 1; ctx.stroke();
+    });
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(245,234,208,0.45)'; ctx.font = this.font(12);
+    ctx.fillText('A/D — browse    ESC — back', W / 2, H - 22);
+  },
+  bestiaryInput() {
+    const n = this.BESTIARY.length;
+    if (Input.hit('left')) { this.bestIdx = (this.bestIdx + n - 1) % n; Audio2.sfx('ui'); }
+    if (Input.hit('right')) { this.bestIdx = (this.bestIdx + 1) % n; Audio2.sfx('ui'); }
+    if (Input.hit('jump')) { this.bestIdx = (this.bestIdx + n - 6) % n; Audio2.sfx('ui'); }
+    if (Input.hit('down')) { this.bestIdx = (this.bestIdx + 6) % n; Audio2.sfx('ui'); }
+    if (Input.hit('pause')) { Audio2.sfx('uiBack'); this.screen = 'menu'; }
+  },
+
   // ---------------- SETTINGS ----------------
   SETTINGS: [
     ['Master Volume', 'master', 'vol'], ['Music Volume', 'music', 'vol'], ['SFX Volume', 'sfx', 'vol'],
@@ -338,9 +427,7 @@ const UI = {
     ['Language', 'language', 'lang'], ['Reset Settings', null, 'reset'],
   ],
   drawSettings(ctx, t) {
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#0d0a1c'); g.addColorStop(1, '#241630');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    this.drawArtBackdrop(ctx, 'bg_temple', t, 0.74);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffb340'; ctx.font = this.fontTitle(34);
     ctx.fillText('SETTINGS', W / 2, 80);
@@ -404,9 +491,7 @@ const UI = {
   CONTROLS: [['Move Left', 'left'], ['Move Right', 'right'], ['Jump', 'jump'], ['Down / Drop', 'down'],
   ['Basic Attack', 'attack'], ['Special Attack', 'special'], ['Ultimate', 'ultimate'], ['Dash / Dodge', 'dash'], ['Interact', 'interact']],
   drawControls(ctx, t) {
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#0d0a1c'); g.addColorStop(1, '#241630');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    this.drawArtBackdrop(ctx, 'bg_chamber', t, 0.74);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffb340'; ctx.font = this.fontTitle(34);
     ctx.fillText('CONTROLS', W / 2, 80);
@@ -446,8 +531,7 @@ const UI = {
 
   // ---------------- CREDITS ----------------
   drawCredits(ctx, t) {
-    this.drawTitleBG(ctx, t);
-    ctx.fillStyle = 'rgba(6,5,14,0.72)'; ctx.fillRect(0, 0, W, H);
+    this.drawArtBackdrop(ctx, 'bg_dawn', t, 0.66);
     ctx.textAlign = 'center';
     const lines = [
       ['GANESH CHATURTHI: THE LAST NIGHT', 30, '#ffb340'],
@@ -573,6 +657,19 @@ const UI = {
     // --- boss bar ---
     if (lvl.boss && !lvl.boss.dead && lvl.bossActive) {
       const b = lvl.boss;
+      // painted boss portrait medallion
+      const SPLASH = { fallenGuardian: 'boss_fallen', shadowBeast: 'boss_shadowbeast', templeGuardian: 'boss_templeguardian', vyomasura: 'vyomasura', vyomasuraUnbound: 'boss_unbound' };
+      const bpKey = SPLASH[b.type];
+      if (bpKey && typeof IMG !== 'undefined' && IMG.has(bpKey)) {
+        const px = W / 2 - 348, py = H - 72, ps = 56;
+        ctx.save();
+        ctx.beginPath(); ctx.arc(px + ps / 2, py + ps / 2, ps / 2, 0, TAU); ctx.clip();
+        if (bpKey === 'vyomasura' && typeof CROPS !== 'undefined') IMG.draw(ctx, bpKey, px, py, ps, ps, CROPS.vyoFace);
+        else IMG.drawCover(ctx, bpKey, px, py, ps, ps, 0.5, 0.28);
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(px + ps / 2, py + ps / 2, ps / 2, 0, TAU);
+        ctx.strokeStyle = 'rgba(255,90,96,0.75)'; ctx.lineWidth = 2.5; ctx.stroke();
+      }
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffd0d0'; ctx.font = this.fontTitle(17);
       ctx.fillText(b.D.name, W / 2, H - 74);
@@ -675,7 +772,9 @@ const UI = {
   DEATH: ['CONTINUE (checkpoint)', 'RESTART LEVEL', 'MAIN MENU'],
   deathIdx: 0,
   drawDeath(ctx, t, game) {
-    ctx.fillStyle = 'rgba(10,4,8,0.8)'; ctx.fillRect(0, 0, W, H);
+    let drewArt = false;
+    if (typeof IMG !== 'undefined') drewArt = IMG.drawCover(ctx, 'cine_defeat', 0, 0, W, H, 0.5, 0.4);
+    ctx.fillStyle = drewArt ? 'rgba(10,4,8,0.66)' : 'rgba(10,4,8,0.8)'; ctx.fillRect(0, 0, W, H);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ff5560'; ctx.font = this.fontTitle(44);
     ctx.fillText('PADIPOYARU...', W / 2, 240);
@@ -707,7 +806,10 @@ const UI = {
   UPG: [['+25 Max Health', 'health'], ['+25 Max Energy', 'energy'], ['+20% Power Damage', 'power'], ['+Ult Charge Rate', 'ultimate'], ['+8% Move Speed', 'speed']],
   upgIdx: 0,
   drawLevelComplete(ctx, t, game) {
-    ctx.fillStyle = 'rgba(6,8,14,0.82)'; ctx.fillRect(0, 0, W, H);
+    let drewArt = false;
+    if (typeof IMG !== 'undefined' && typeof levelBgKey !== 'undefined')
+      drewArt = IMG.drawCover(ctx, levelBgKey(game.level.def), 0, 0, W, H, 0.5 + Math.sin(t * 0.05) * 0.05, 0.42);
+    ctx.fillStyle = drewArt ? 'rgba(6,8,14,0.72)' : 'rgba(6,8,14,0.82)'; ctx.fillRect(0, 0, W, H);
     ctx.textAlign = 'center';
     const grad = ctx.createLinearGradient(0, 120, 0, 180);
     grad.addColorStop(0, '#ffe9b0'); grad.addColorStop(1, '#e07820');
