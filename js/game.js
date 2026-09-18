@@ -343,7 +343,65 @@ class Game {
   }
   onBossIntro(boss) {
     this.toast(boss.D.name + ' — AWAKENED');
-    if (boss.type === 'vyomasuraUnbound') this.bossSplash = { t: 0, dur: 3.4, key: 'boss_unbound', name: boss.D.name };
+    const splashKeys = {
+      fallenGuardian: 'boss_fallen', shadowBeast: 'boss_shadowbeast',
+      templeGuardian: 'boss_templeguardian', vyomasura: 'boss_unbound',
+      vyomasuraUnbound: 'boss_unbound',
+    };
+    const sk = splashKeys[boss.type];
+    if (sk && typeof IMG !== 'undefined' && IMG.has(sk)) {
+      this.bossSplash = { t: 0, dur: 3.4, key: sk, name: boss.D.name,
+        label: boss.type === 'vyomasuraUnbound' ? 'FINAL BATTLE' : 'BOSS BATTLE' };
+    }
+  }
+  // ---- enemy first-encounter cards ----
+  checkEncounters(level) {
+    if (!level || !level.enemies) return;
+    if (!this.seenEnemies) this.seenEnemies = {};
+    if (this.encounterCard) return;
+    const NAMES = {
+      shadowRunner: 'SHADOW RUNNER', ashWarrior: 'ASH WARRIOR',
+      stoneGuardian: 'STONE GUARDIAN', shadowArcher: 'SHADOW ARCHER',
+      corruptedBeast: 'CORRUPTED BEAST', voidMage: 'VOID MAGE',
+      eliteGuardian: 'ELITE GUARDIAN',
+    };
+    const cam = level.camX || 0;
+    for (const e of level.enemies) {
+      if (e.dead || this.seenEnemies[e.type]) continue;
+      if (e.x > cam - 80 && e.x < cam + W + 80) {
+        this.seenEnemies[e.type] = true;
+        const key = 'enemy_' + e.type;
+        if (typeof IMG !== 'undefined' && IMG.has(key)) {
+          this.encounterCard = { t: 0, dur: 2.6, key, name: NAMES[e.type] || e.type };
+        }
+        break;
+      }
+    }
+  }
+  drawEncounterCard(ctx, dt) {
+    const ec = this.encounterCard;
+    if (!ec) return;
+    ec.t += dt;
+    const p = ec.t / ec.dur;
+    if (p >= 1) { this.encounterCard = null; return; }
+    const a = p < 0.15 ? p / 0.15 : p > 0.75 ? Math.max(0, (1 - p) / 0.25) : 1;
+    const cw = 320, chh = 128, cx = W - cw - 18, cy = 74;
+    ctx.save();
+    ctx.globalAlpha = a * 0.96;
+    ctx.fillStyle = 'rgba(8,6,18,0.88)';
+    ctx.strokeStyle = 'rgba(160,90,255,0.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(cx, cy, cw, chh, 10); ctx.fill(); ctx.stroke();
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(cx + 8, cy + 8, 112, chh - 16, 8); ctx.clip();
+    IMG.drawCover(ctx, ec.key, cx + 8, cy + 8, 112, chh - 16, 0.5, 0.35);
+    ctx.restore();
+    ctx.fillStyle = '#b48cff'; ctx.font = 'bold 11px Georgia'; ctx.textAlign = 'left';
+    ctx.fillText('NEW THREAT', cx + 132, cy + 34);
+    ctx.fillStyle = '#f2e9ff'; ctx.font = 'bold 17px Georgia';
+    ctx.fillText(ec.name, cx + 132, cy + 58);
+    ctx.fillStyle = 'rgba(220,205,255,0.55)'; ctx.font = '11px Georgia';
+    ctx.fillText('Adhi jagratha ra... kotha enemy!', cx + 132, cy + 82);
+    ctx.restore();
   }
   drawBossSplash(ctx, dt) {
     const bs = this.bossSplash;
@@ -363,7 +421,7 @@ class Game {
     ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ff5560'; ctx.font = 'bold 20px Georgia';
-    ctx.fillText('FINAL BATTLE', W / 2, H - 130);
+    ctx.fillText(bs.label || 'BOSS BATTLE', W / 2, H - 130);
     const grad = ctx.createLinearGradient(0, H - 116, 0, H - 66);
     grad.addColorStop(0, '#ffb0b8'); grad.addColorStop(1, '#c02050');
     ctx.fillStyle = grad; ctx.font = 'bold 44px Georgia';
@@ -482,6 +540,8 @@ class Game {
         this.cine.draw(ctx);
         UI.drawSubtitle(ctx, this.subs[0], this.t);
         UI.drawToasts(ctx, dt);
+        this.checkEncounters(this.level);
+        this.drawEncounterCard(ctx, dt);
         this.drawIntroCard(ctx, dt);
         this.drawBossSplash(ctx, dt);
         if (Input.hit('pause') && !this.cine.active) {

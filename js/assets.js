@@ -32,6 +32,17 @@ const IMG = {
     sprites_kiran: 'assets/characters/kiran/sprites.png',
     // --- boss splash art ---
     boss_unbound: 'assets/bosses/vyomasura_unbound_splash.jpg',
+    boss_fallen: 'assets/bosses/fallen_guardian_splash.jpg',
+    boss_shadowbeast: 'assets/bosses/shadow_beast_splash.jpg',
+    boss_templeguardian: 'assets/bosses/temple_guardian_splash.jpg',
+    // --- enemy class artwork (encounter intros / bestiary) ---
+    enemy_shadowRunner: 'assets/enemies/shadow_runner/art.jpg',
+    enemy_ashWarrior: 'assets/enemies/ash_warrior/art.jpg',
+    enemy_stoneGuardian: 'assets/enemies/stone_guardian/art.jpg',
+    enemy_shadowArcher: 'assets/enemies/shadow_archer/art.jpg',
+    enemy_corruptedBeast: 'assets/enemies/corrupted_beast/art.jpg',
+    enemy_voidMage: 'assets/enemies/void_mage/art.jpg',
+    enemy_eliteGuardian: 'assets/enemies/elite_guardian/art.jpg',
     // --- UI ---
     icons: 'assets/ui/icons/ability_icons.jpg',
     menu_group: 'assets/ui/menus/menu_group_art.jpg',
