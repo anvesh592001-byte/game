@@ -35,18 +35,21 @@ const SpriteArt = {
         break;
       }
       case 'walk': {
-        const phase = Math.sin(t * 9);
-        cell = phase >= 0 ? 1 : 2;                            // stride swap
-        bob = Math.abs(Math.cos(t * 9)) * 2.4;                // weight shift
-        rot = phase * 0.022;
+        // stride phase LOCKED TO DISTANCE TRAVELED — one step every ~34px, no foot sliding
+        const ph = st.strideD !== undefined ? Math.sin(st.strideD * (Math.PI / 34)) : Math.sin(t * 9);
+        cell = ph >= 0 ? 1 : 2;                               // stride swap on ground contact
+        bob = Math.abs(ph) * 2.6;                             // weight rises mid-step
+        rot = ph * 0.02;
         break;
       }
       case 'run': {
         cell = 3;
-        const c = Math.sin(t * 13);
-        bob = Math.abs(Math.cos(t * 13)) * 3.6;
-        rot = 0.05 + c * 0.03;                                // forward lean + cycle
-        sqy = 1 + Math.abs(c) * 0.02;
+        // run cycle also distance-locked — one bound every ~46px
+        const ph = st.strideD !== undefined ? Math.sin(st.strideD * (Math.PI / 46)) : Math.sin(t * 13);
+        bob = Math.abs(ph) * 4.2;
+        rot = 0.055 + ph * 0.028;                             // forward lean + cycle
+        sqy = 1 + Math.abs(ph) * 0.02;
+        sqx = 1 - Math.abs(ph) * 0.012;
         break;
       }
       case 'jump': {
@@ -94,9 +97,10 @@ const SpriteArt = {
     }
 
     const cd = meta.cells[cell];
-    // target on-screen height, scaled to character bible heights
-    const targetH = C.height * 1.32;
-    const s = targetH / cd.h;
+    // scale normalized to the IDLE cell height — every pose keeps the same
+    // body scale (a kneeling cell must not be inflated to standing height)
+    const refH = meta.cells[0].h;
+    const s = (C.height * 1.32) / refH;
     const dw = cd.w * s * sqx, dh = cd.h * s * sqy;
 
     ctx.save();
@@ -156,12 +160,13 @@ const SpriteArt = {
         break;
       }
       case 'move': case 'walk': {
-        if (form === 2) { cell = 1; bob = Math.sin(t * 4) * 6; rot = 0.03; }
+        if (form === 2) { cell = 1; bob = Math.sin(t * 4) * 6; rot = 0.03; }  // Unbound glides (flying, no footfall)
         else {
-          const ph = Math.sin(t * 5.2);
-          cell = ph >= 0 ? 1 : 2;                              // stride swap
-          bob = Math.abs(Math.cos(t * 5.2)) * 3;
-          rot = ph * 0.015;
+          // heavy stride locked to distance — one step every ~55px (tall figure)
+          const ph = st.strideD !== undefined ? Math.sin(st.strideD * (Math.PI / 55)) : Math.sin(t * 5.2);
+          cell = ph >= 0 ? 1 : 2;
+          bob = Math.abs(ph) * 3.2;
+          rot = ph * 0.013;
         }
         break;
       }
@@ -202,8 +207,8 @@ const SpriteArt = {
     }
 
     const cd = meta.cells[cell];
-    const targetH = (st.h || 210) * 1.18 * (form === 2 ? 1.12 : 1);
-    const s = targetH / cd.h;
+    const refH = meta.cells[0].h;   // scale locked to idle cell — consistent body size across poses
+    const s = ((st.h || 210) * 1.18 * (form === 2 ? 1.12 : 1)) / refH;
     const dw = cd.w * s * sqx, dh = cd.h * s * sqy;
 
     ctx.save();

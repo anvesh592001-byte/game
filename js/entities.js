@@ -141,6 +141,19 @@ class Player extends Actor {
     this.wasGrounded = this.grounded;
     this.physics(level);
 
+    // footstep contacts — dust puff exactly when the stride cycle crosses zero
+    if (this.grounded && (this.pose === 'walk' || this.pose === 'run')) {
+      const period = this.pose === 'run' ? 46 : 34;
+      const sd = (this.strideD || 0) + Math.abs(this.vx);
+      const stepNow = Math.floor(sd / period);
+      if (this.lastStep === undefined) this.lastStep = stepNow;
+      if (stepNow !== this.lastStep) {
+        this.lastStep = stepNow;
+        level.parts.emit(this.x - this.facing * 8, this.y - 2,
+          { n: 3, color: 'rgba(190,170,140,0.5)', spMax: 1.4, up: true, dMin: 0.02, dMax: 0.05 });
+      }
+    }
+
     // emotion from context
     if (this.hurtT > 0) this.emotion = 'pain';
     else if (level.bossActive) this.emotion = 'determined';
@@ -291,11 +304,14 @@ class Player extends Actor {
       ctx.strokeStyle = `rgba(255,190,90,${0.4 + Math.sin(this.t * 6) * 0.2})`; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(0, -55, 58, 0, TAU); ctx.stroke();
     }
+    // stride distance accumulator — feet animation locked to ground covered (no sliding)
+    if (this.grounded) this.strideD = (this.strideD || 0) + Math.abs(this.x - (this.prevX !== undefined ? this.prevX : this.x));
+    this.prevX = this.x;
     const stP = {
       pose: this.dead ? 'kneel' : this.pose, t: this.t, vx: this.vx, vy: this.vy,
       facing: this.facing, attackT: Math.max(0, this.attackT),
       emotion: this.dead ? 'pain' : this.emotion, powered: this.powered,
-      blink: this.blinkT < 0.12,
+      blink: this.blinkT < 0.12, strideD: this.strideD || 0,
     };
     if (!(typeof SpriteArt !== 'undefined' && SpriteArt.hero(ctx, this.id, stP))) Art.hero(ctx, this.id, stP);
     ctx.restore();
@@ -419,10 +435,12 @@ class Companion extends Actor {
       ctx.strokeStyle = `rgba(255,190,90,${0.35 + Math.sin(this.t * 6) * 0.18})`; ctx.lineWidth = 2.4;
       ctx.beginPath(); ctx.arc(0, -52, 54, 0, TAU); ctx.stroke();
     }
+    if (this.grounded) this.strideD = (this.strideD || 0) + Math.abs(this.x - (this.prevX !== undefined ? this.prevX : this.x));
+    this.prevX = this.x;
     const stC = {
       pose: this.pose, t: this.t, vx: this.vx, vy: this.vy, facing: this.facing,
       attackT: Math.max(0, this.attackT), emotion: this.emotion,
-      powered: this.powered, blink: this.blinkT < 0.12,
+      powered: this.powered, blink: this.blinkT < 0.12, strideD: this.strideD || 0,
     };
     if (!(typeof SpriteArt !== 'undefined' && SpriteArt.hero(ctx, this.id, stC))) Art.hero(ctx, this.id, stC);
     ctx.restore();
@@ -821,10 +839,12 @@ class Boss extends Actor {
       ctx.fillStyle = `rgba(255,80,80,${0.45 - this.attackT * 0.8})`;
       ctx.beginPath(); ctx.arc(0, -this.h * 0.55, 22 + this.attackT * 44, 0, TAU); ctx.fill();
     }
+    this.strideD = (this.strideD || 0) + Math.abs(this.x - (this.prevX !== undefined ? this.prevX : this.x));
+    this.prevX = this.x;
     const st = {
       t: this.t, facing: this.facing, attackT: Math.max(0, this.attackT),
       pose: this.dead ? 'die' : this.hurtT > 0 ? 'hurt' : this.attackT >= 0 ? (this.pose === 'cast' ? 'cast' : 'attack') : this.pose,
-      h: this.h,
+      h: this.h, strideD: this.strideD,
     };
     // Vyomasura fights use generated keyframe art (image-first), others vector
     let drewKf = false;
