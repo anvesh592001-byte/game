@@ -33,7 +33,7 @@ class CinematicEngine {
       // dialogue line
       const dur = Math.max(2.2, s.text.length * 0.052);
       const who = s.who === VYO ? 'VYOMASURA' : CHARS[s.who] ? CHARS[s.who].name : s.who;
-      this.game.subtitle(who, s.text, dur, CHARS[s.who] ? s.who : null);
+      this.game.subtitle(who, s.text, dur, CHARS[s.who] ? s.who : null, s.emo || null);
       this.wait = dur + 0.35;
       // set emotion & face speaker
       if (lvl) {
@@ -238,8 +238,8 @@ class Game {
     requestAnimationFrame(ts => this.loop(ts));
   }
   toast(text) { UI.toasts.push({ text, age: 0 }); }
-  subtitle(who, text, dur, hero) {
-    this.subs = [{ who, text, dur: dur || 3, age: 0, hero: hero || (Object.keys(CHARS).find(k => CHARS[k].name === who) || null) }];
+  subtitle(who, text, dur, hero, emo) {
+    this.subs = [{ who, text, dur: dur || 3, age: 0, emo: emo || null, hero: hero || (Object.keys(CHARS).find(k => CHARS[k].name === who) || null) }];
   }
   companionBark(id, kind) {
     const pool = BARKS[kind] && BARKS[kind][id];

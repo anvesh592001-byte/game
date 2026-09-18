@@ -573,7 +573,8 @@ const UI = {
     rr(ctx, 24, 22, 70, 70, 10); ctx.clip();
     ctx.fillStyle = '#241a30'; ctx.fillRect(24, 22, 70, 70);
     let drewP = false;
-    if (typeof IMG !== 'undefined') drewP = IMG.draw(ctx, 'hero_' + p.id, 24, 22, 70, 70, CROPS.heroPortrait);
+    if (typeof drawFace !== 'undefined') drewP = drawFace(ctx, p.id, p.emotion || 'neutral', 24, 22, 70, 70);
+    if (!drewP && typeof IMG !== 'undefined') drewP = IMG.draw(ctx, 'hero_' + p.id, 24, 22, 70, 70, CROPS.heroPortrait);
     if (!drewP) {
       ctx.translate(59, 148); ctx.scale(1.15, 1.15);
       Art.hero(ctx, p.id, { pose: 'idle', t: lvl.scene.t, facing: 1, emotion: p.emotion, powered: false });
@@ -715,7 +716,11 @@ const UI = {
         ctx.save();
         rr(ctx, px, py, ps, ps, 10); ctx.clip();
         ctx.fillStyle = '#17111f'; ctx.fillRect(px, py, ps, ps);
-        IMG.draw(ctx, key, px, py, ps, ps, crop);
+        // expression portrait first (9-emotion sheet), master-art crop fallback
+        let drewFace = false;
+        if (sub.hero && typeof drawFace !== 'undefined')
+          drewFace = drawFace(ctx, sub.hero, sub.emo || 'neutral', px, py, ps, ps);
+        if (!drewFace) IMG.draw(ctx, key, px, py, ps, ps, crop);
         ctx.restore();
         rr(ctx, px, py, ps, ps, 10);
         ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();

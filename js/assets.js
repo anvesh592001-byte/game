@@ -72,6 +72,11 @@ const IMG = {
     // --- villain keyframe sheets ---
     kf_vyomasura: 'assets/villain/vyomasura/keyframes.png',
     kf_vyomasuraUnbound: 'assets/villain/vyomasura/keyframes_unbound.png',
+    // --- portrait expression sheets (9 emotions per hero) ---
+    face_aditya: 'assets/portraits/aditya_expressions.jpg',
+    face_arjun: 'assets/portraits/arjun_expressions.jpg',
+    face_ravi: 'assets/portraits/ravi_expressions.jpg',
+    face_kiran: 'assets/portraits/kiran_expressions.jpg',
     // --- UI ---
     icons: 'assets/ui/icons/ability_icons.jpg',
     menu_group: 'assets/ui/menus/menu_group_art.jpg',
@@ -131,6 +136,35 @@ const IMG = {
     return true;
   },
 };
+
+// expression portrait helper — draws hero face w/ emotion from expression sheet
+// order: 0 normal 1 happy 2 confused 3 shocked 4 angry 5 worried 6 serious 7 emotional 8 determined
+const FACE_IDX = {
+  neutral: 0, calm: 0, normal: 0,
+  happy: 1, joy: 1, laugh: 1,
+  confused: 2, think: 2,
+  shock: 3, shocked: 3, surprise: 3, fear: 3,
+  angry: 4, rage: 4,
+  worry: 5, worried: 5, anxious: 5,
+  serious: 6, focus: 6, determinedCalm: 6,
+  sad: 7, emotional: 7, pain: 7, cry: 7,
+  determined: 8, resolve: 8, brave: 8,
+};
+function drawFace(ctx, heroId, emotion, dx, dy, dw, dh) {
+  if (typeof IMG === 'undefined') return false;
+  const img = IMG.get('face_' + heroId);
+  if (!img) return false;
+  const idx = FACE_IDX[emotion] !== undefined ? FACE_IDX[emotion] : 0;
+  const cols = img.width > img.height ? 5 : 3;
+  const rows = img.width > img.height ? 2 : 3;
+  const cw = img.width / cols, chh = img.height / rows;
+  const col = idx % cols, row = Math.floor(idx / cols);
+  // slight inset to avoid neighboring cell bleed
+  const inset = 0.04;
+  ctx.drawImage(img, col * cw + cw * inset, row * chh + chh * inset,
+    cw * (1 - inset * 2), chh * (1 - inset * 2), dx, dy, dw, dh);
+  return true;
+}
 
 // crop presets for the master sheets (3-view sheets → single figure / portrait)
 const CROPS = {
