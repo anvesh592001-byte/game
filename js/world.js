@@ -742,6 +742,8 @@ class Scene {
     const t = this.t;
     // corrupted variants only exist for lamp; skip others when corrupted
     const MAP = {
+      house: { key: (p.seed || 1) % 2 ? 'bld_house_a' : 'bld_house_b', h: 235 + ((p.seed || 1) % 3) * 22, corKey: 'bld_house_cor' },
+      shop: { key: 'bld_shop', h: 260, corKey: 'bld_shop_cor' },
       stage: { key: 'prop_pandal', h: 280 },
       stall: { key: 'prop_stall', h: 165 },
       idolSmall: { key: 'prop_idol_small', h: 96 * (p.s || 1) },
@@ -753,8 +755,13 @@ class Scene {
     };
     const m = MAP[p.type];
     if (!m) return false;
-    if (cor && p.type !== 'lamp' && p.type !== 'tree') return false; // corrupted scenes keep vector damage look
-    const img = IMG.get(m.key);
+    let useKey = m.key;
+    if (cor) {
+      if (m.corKey) useKey = m.corKey;                    // buildings: dedicated corrupted art
+      else if (p.type === 'lamp') useKey = 'prop_lamp_corrupt';
+      else if (p.type !== 'tree') return false;           // others: vector damage look
+    }
+    const img = IMG.get(useKey);
     if (!img) return false;
     if (p.type === 'banner') {
       // toran garland: stretch to banner width, hung from top anchor line

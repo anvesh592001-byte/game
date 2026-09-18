@@ -20,6 +20,7 @@ class CinematicEngine {
     this.active = true; this.steps = steps; this.idx = -1;
     this.stepT = 0; this.onDone = onDone || null;
     this.titleCard = null; this.narr = null;
+    this.fade = 0; this.fadeDir = 0; this.flash = null; this.board = null;
     this.advance();
   }
   advance() {
@@ -150,6 +151,7 @@ class CinematicEngine {
   end() {
     this.active = false;
     this.narr = null; this.titleCard = null; this.board = null; this.boardHold = false;
+    this.fade = 0; this.fadeDir = 0; this.flash = null;
     const cb = this.onDone; this.onDone = null;
     if (cb) cb();
   }
@@ -617,7 +619,9 @@ class Game {
       const rise = v.rise ? Math.min(1, v.t / 2) : 1;
       ctx.translate(v.x - lvl.camX, 620 - lvl.camY + (1 - ease(rise)) * 220);
       ctx.globalAlpha = ease(rise);
-      Art.vyomasura(ctx, { t: v.t, pose: 'idle', facing: lvl.player.x < v.x ? -1 : 1, form: 1 });
+      const vSt = { t: v.t, pose: v.rise && rise < 1 ? 'rise' : 'idle', facing: lvl.player.x < v.x ? -1 : 1, h: 210 };
+      if (!(typeof SpriteArt !== 'undefined' && SpriteArt.vyo && SpriteArt.vyo(ctx, 1, vSt)))
+        Art.vyomasura(ctx, { ...vSt, form: 1 });
       ctx.restore();
     }
   }

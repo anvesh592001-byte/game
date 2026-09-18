@@ -454,6 +454,7 @@ class Enemy extends Actor {
   update(level, dt) {
     this.t += dt;
     if (this.dead) { this.dieT += dt * 1.4; return; }
+    if (level.game && level.game.cine.active) { this.pose = 'idle'; this.vx *= 0.85; this.physics(level); return; }
     if (this.hurtT > 0) { this.hurtT -= dt; this.pose = 'hurt'; this.vx *= 0.8; this.physics(level); return; }
     if (this.stunT > 0) { this.stunT -= dt; this.pose = 'hurt'; this.vx *= 0.85; this.physics(level); return; }
     if (this.atkCd > 0) this.atkCd -= dt;
@@ -822,9 +823,16 @@ class Boss extends Actor {
     }
     const st = {
       t: this.t, facing: this.facing, attackT: Math.max(0, this.attackT),
-      pose: this.hurtT > 0 ? 'hurt' : this.attackT >= 0 ? (this.pose === 'cast' ? 'cast' : 'attack') : this.pose,
+      pose: this.dead ? 'die' : this.hurtT > 0 ? 'hurt' : this.attackT >= 0 ? (this.pose === 'cast' ? 'cast' : 'attack') : this.pose,
+      h: this.h,
     };
-    Art.boss(ctx, this.type, st);
+    // Vyomasura fights use generated keyframe art (image-first), others vector
+    let drewKf = false;
+    if (typeof SpriteArt !== 'undefined' && SpriteArt.vyo) {
+      if (this.type === 'vyomasura') drewKf = SpriteArt.vyo(ctx, 1, st);
+      else if (this.type === 'vyomasuraUnbound') drewKf = SpriteArt.vyo(ctx, 2, st);
+    }
+    if (!drewKf) Art.boss(ctx, this.type, st);
     ctx.restore();
   }
 }

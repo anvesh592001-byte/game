@@ -56,6 +56,15 @@ const IMG = {
     prop_arch: 'assets/props/festival_arch.png',
     prop_lamp: 'assets/props/street_lamp.png',
     prop_lamp_corrupt: 'assets/props/street_lamp_corrupt.png',
+    // --- buildings (image-first houses/shops, festive + corrupted variants) ---
+    bld_house_a: 'assets/props/house_festive_a.png',
+    bld_house_b: 'assets/props/house_festive_b.png',
+    bld_shop: 'assets/props/shop_festive.png',
+    bld_house_cor: 'assets/props/house_corrupt.png',
+    bld_shop_cor: 'assets/props/shop_corrupt.png',
+    // --- villain keyframe sheets ---
+    kf_vyomasura: 'assets/villain/vyomasura/keyframes.png',
+    kf_vyomasuraUnbound: 'assets/villain/vyomasura/keyframes_unbound.png',
     // --- UI ---
     icons: 'assets/ui/icons/ability_icons.jpg',
     menu_group: 'assets/ui/menus/menu_group_art.jpg',
