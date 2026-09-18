@@ -34,24 +34,8 @@ const SpriteArt = {
         if (id === 'arjun') { bob = Math.sin(t * 3.4) * 1.4; } // restless energy
         break;
       }
-      case 'walk': {
-        // stride phase LOCKED TO DISTANCE TRAVELED — one step every ~34px, no foot sliding
-        const ph = st.strideD !== undefined ? Math.sin(st.strideD * (Math.PI / 34)) : Math.sin(t * 9);
-        cell = ph >= 0 ? 1 : 2;                               // stride swap on ground contact
-        bob = Math.abs(ph) * 2.6;                             // weight rises mid-step
-        rot = ph * 0.02;
-        break;
-      }
-      case 'run': {
-        cell = 3;
-        // run cycle also distance-locked — one bound every ~46px
-        const ph = st.strideD !== undefined ? Math.sin(st.strideD * (Math.PI / 46)) : Math.sin(t * 13);
-        bob = Math.abs(ph) * 4.2;
-        rot = 0.055 + ph * 0.028;                             // forward lean + cycle
-        sqy = 1 + Math.abs(ph) * 0.02;
-        sqx = 1 - Math.abs(ph) * 0.012;
-        break;
-      }
+      case 'walk': case 'run':
+        break; // handled below via dedicated 4-phase cycle sheet
       case 'jump': {
         cell = 4;
         const vy = st.vy || 0;
@@ -96,10 +80,38 @@ const SpriteArt = {
       default: cell = 0;
     }
 
-    const cd = meta.cells[cell];
-    // scale normalized to the IDLE cell height — every pose keeps the same
-    // body scale (a kneeling cell must not be inflated to standing height)
-    const refH = meta.cells[0].h;
+    // ---- WALK/RUN: dedicated 4-phase cycle sheets (contact→passing→contact→passing / drive→flight) ----
+    let useImg = img, useMeta = meta;
+    if (pose === 'walk' || pose === 'run') {
+      const cImg = IMG.get('cycle_' + id);
+      const cMeta = SPRITE_META['cycle_' + id];
+      if (cImg && cMeta) {
+        useImg = cImg; useMeta = cMeta;
+        const sd = st.strideD || 0;
+        if (pose === 'walk') {
+          // full walk cycle = 4 frames over ~64px of ground: contact, passing, contact-mirror, passing-mirror
+          const fr = Math.floor(sd / 16) % 4;
+          cell = fr;
+          bob = (fr === 1 || fr === 3) ? 2.6 : 0;             // body rises on passing frames
+          rot = (fr === 0 ? 1 : fr === 2 ? -1 : 0) * 0.015;
+        } else {
+          // run cycle = 4 frames over ~92px: drive, flight, drive-mirror, flight-mirror
+          const fr = Math.floor(sd / 23) % 4;
+          cell = fr + 4;
+          bob = (fr === 1 || fr === 3) ? 5 : 1;               // airborne on flight frames
+          rot = 0.06;
+          sqy = (fr === 1 || fr === 3) ? 1.03 : 0.99;
+        }
+      } else {
+        // cycle sheet not loaded yet — fall back to old 2-frame stride on base sheet
+        const ph = Math.sin((st.strideD || t * 60) * (Math.PI / 34));
+        cell = pose === 'run' ? 3 : (ph >= 0 ? 1 : 2);
+        bob = Math.abs(ph) * 3;
+      }
+    }
+    const cd = useMeta.cells[cell];
+    // scale normalized to the first cell height — consistent body size across poses
+    const refH = useMeta.cells[0].h;
     const s = (C.height * 1.32) / refH;
     const dw = cd.w * s * sqx, dh = cd.h * s * sqy;
 
@@ -124,7 +136,7 @@ const SpriteArt = {
     if (pose === 'hurt') {
       ctx.filter = 'brightness(1.35) saturate(1.2)';
     }
-    ctx.drawImage(img, cd.x, cd.y, cd.w, cd.h, -dw / 2 + dx, -dh - bob, dw, dh);
+    ctx.drawImage(useImg, cd.x, cd.y, cd.w, cd.h, -dw / 2 + dx, -dh - bob, dw, dh);
     ctx.filter = 'none';
 
     // glow on striking hand during powered attacks
@@ -138,6 +150,28 @@ const SpriteArt = {
     ctx.restore();
     return true;
   },
+  // ---- townspeople (image-first NPCs from the 8-person pack) ----
+  npc(ctx, seed, t, facing) {
+    if (typeof IMG === 'undefined' || typeof SPRITE_META === 'undefined') return false;
+    const img = IMG.get('npc_pack');
+    const meta = SPRITE_META.npcs;
+    if (!img || !meta) return false;
+    const cd = meta.cells[Math.abs(seed) % 8];
+    const hgt = [104, 100, 106, 68, 74, 100, 104, 92][Math.abs(seed) % 8];  // kids shorter
+    const s = hgt / cd.h;
+    const dw = cd.w * s, dh = cd.h * s;
+    const sway = Math.sin(t * 1.6 + seed) * 0.015;
+    ctx.save();
+    if (facing === -1) ctx.scale(-1, 1);
+    ctx.rotate(sway);
+    // soft ground shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(0, 1, dw * 0.32, 4.5, 0, 0, TAU); ctx.fill();
+    ctx.drawImage(img, cd.x, cd.y, cd.w, cd.h, -dw / 2, -dh + Math.abs(Math.sin(t * 1.6 + seed)) * 1.2, dw, dh);
+    ctx.restore();
+    return true;
+  },
+
   // ---- villain keyframe animation ----
   // Cells: 0 idle | 1 strideL | 2 strideR | 3 hover | 4 charge | 5 blast | 6 hurt | 7 defeat
   // Sheets face LEFT (toward the player's usual approach).

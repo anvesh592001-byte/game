@@ -62,6 +62,13 @@ const IMG = {
     bld_shop: 'assets/props/shop_festive.png',
     bld_house_cor: 'assets/props/house_corrupt.png',
     bld_shop_cor: 'assets/props/shop_corrupt.png',
+    // --- walk/run cycle sheets (4-phase walk + 4-phase run each) ---
+    cycle_aditya: 'assets/characters/aditya/cycle.png',
+    cycle_arjun: 'assets/characters/arjun/cycle.png',
+    cycle_ravi: 'assets/characters/ravi/cycle.png',
+    cycle_kiran: 'assets/characters/kiran/cycle.png',
+    // --- townspeople pack (8 distinct NPCs) ---
+    npc_pack: 'assets/props/npc_pack.png',
     // --- villain keyframe sheets ---
     kf_vyomasura: 'assets/villain/vyomasura/keyframes.png',
     kf_vyomasuraUnbound: 'assets/villain/vyomasura/keyframes_unbound.png',

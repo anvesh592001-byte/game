@@ -27,6 +27,8 @@ function streetProps(width, seed, opts = {}) {
     if (rng() < 0.2) P.push({ type: 'wires', x: x + 50, y: 330, w: 320, layer: 0 });
     if (rng() < 0.18) P.push({ type: 'auto', x: x + 170, layer: 2 });
     if (rng() < 0.15) P.push({ type: 'bench', x: x + 200, layer: 2 });
+    if (rng() < 0.5 && !opts.noFestival) P.push({ type: 'person', x: x + 60 + rng() * 120, layer: 2, seed: Math.floor(rng() * 999) });
+    if (rng() < 0.25 && !opts.noFestival) P.push({ type: 'person', x: x + 150 + rng() * 60, layer: 1, seed: Math.floor(rng() * 999), scale: 0.82 });
     x += 180 + rng() * 160;
   }
   return P;
@@ -736,7 +738,8 @@ class Level {
       const sx = n.x - camX;
       if (sx < -80 || sx > W + 80) continue;
       ctx.save(); ctx.translate(sx, n.y - camY);
-      Art.npc(ctx, n.kind, n.t, this.player.x > n.x ? 1 : -1, n.seed + 1);
+      if (!(typeof SpriteArt !== 'undefined' && SpriteArt.npc && SpriteArt.npc(ctx, n.seed, n.t, this.player.x > n.x ? 1 : -1)))
+        Art.npc(ctx, n.kind, n.t, this.player.x > n.x ? 1 : -1, n.seed + 1);
       if ((n.rescue && !n.rescued) || (!n.talked && !n.flee && !n.rescue && Math.abs(this.player.x - n.x) < 120)) {
         ctx.fillStyle = n.rescue ? '#ffd98a' : '#8affc1';
         ctx.font = 'bold 15px Georgia'; ctx.textAlign = 'center';

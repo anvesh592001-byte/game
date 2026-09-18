@@ -802,6 +802,9 @@ class Scene {
       const cor = p.corrupted !== undefined ? p.corrupted : th.corrupted;
       if (this.drawImgProp(ctx, p, cor)) { ctx.restore(); continue; }
       switch (p.type) {
+        case 'person':
+          if (!cor && typeof SpriteArt !== 'undefined' && SpriteArt.npc) SpriteArt.npc(ctx, p.seed || 1, this.t + (p.seed || 0), (p.seed || 1) % 2 ? 1 : -1);
+          break;
         case 'house': Props.house(ctx, p.seed || 1, cor); break;
         case 'shop': Props.shop(ctx, p.seed || 1, cor, p.label); break;
         case 'temple': Props.temple(ctx, p.seed || 1, p.scale2 || 1, cor); break;
