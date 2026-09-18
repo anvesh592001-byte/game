@@ -43,6 +43,19 @@ const IMG = {
     enemy_corruptedBeast: 'assets/enemies/corrupted_beast/art.jpg',
     enemy_voidMage: 'assets/enemies/void_mage/art.jpg',
     enemy_eliteGuardian: 'assets/enemies/elite_guardian/art.jpg',
+    // --- cinematics (extra) ---
+    cine_storm: 'assets/cinematics/storm_arrival.jpg',
+    cine_confront: 'assets/cinematics/first_confrontation.jpg',
+    // --- festival props (transparent PNG, bottom-anchored) ---
+    prop_pandal: 'assets/props/pandal_stage.png',
+    prop_stall: 'assets/props/food_stall.png',
+    prop_idol_small: 'assets/props/ganesh_idol_small.png',
+    prop_toran: 'assets/props/marigold_toran.png',
+    prop_tree: 'assets/props/banyan_tree.png',
+    prop_shrine: 'assets/props/stone_shrine.png',
+    prop_arch: 'assets/props/festival_arch.png',
+    prop_lamp: 'assets/props/street_lamp.png',
+    prop_lamp_corrupt: 'assets/props/street_lamp_corrupt.png',
     // --- UI ---
     icons: 'assets/ui/icons/ability_icons.jpg',
     menu_group: 'assets/ui/menus/menu_group_art.jpg',

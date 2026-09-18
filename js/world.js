@@ -735,6 +735,51 @@ class Scene {
     }
   }
 
+  // image-first prop rendering: draws generated art bottom-anchored at (0,0).
+  // Returns true if handled; false -> vector fallback.
+  drawImgProp(ctx, p, cor) {
+    if (typeof IMG === 'undefined') return false;
+    const t = this.t;
+    // corrupted variants only exist for lamp; skip others when corrupted
+    const MAP = {
+      stage: { key: 'prop_pandal', h: 280 },
+      stall: { key: 'prop_stall', h: 165 },
+      idolSmall: { key: 'prop_idol_small', h: 96 * (p.s || 1) },
+      tree: { key: 'prop_tree', h: 250 },
+      shrine: { key: 'prop_shrine', h: 190 },
+      gate: { key: 'prop_arch', h: 300 },
+      lamp: { key: cor ? 'prop_lamp_corrupt' : 'prop_lamp', h: 185 },
+      banner: { key: 'prop_toran', h: 0 },
+    };
+    const m = MAP[p.type];
+    if (!m) return false;
+    if (cor && p.type !== 'lamp' && p.type !== 'tree') return false; // corrupted scenes keep vector damage look
+    const img = IMG.get(m.key);
+    if (!img) return false;
+    if (p.type === 'banner') {
+      // toran garland: stretch to banner width, hung from top anchor line
+      const w = p.w || 220;
+      const hh = w * (img.height / img.width);
+      const sway = Math.sin(t * 1.3 + (p.x || 0)) * 2;
+      ctx.drawImage(img, -w / 2 + sway * 0.3, -150 + sway, w, hh);
+      return true;
+    }
+    const dh = m.h, dw = dh * (img.width / img.height);
+    ctx.drawImage(img, -dw / 2, -dh, dw, dh);
+    // pandal / idol warm glow + lamp light pool kept from vector feel
+    if (p.type === 'stage' || p.type === 'idolSmall') {
+      const g = ctx.createRadialGradient(0, -dh * 0.45, 8, 0, -dh * 0.45, dh * 0.7);
+      g.addColorStop(0, 'rgba(255,190,90,0.16)'); g.addColorStop(1, 'rgba(255,190,90,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -dh * 0.45, dh * 0.7, 0, TAU); ctx.fill();
+    }
+    if (p.type === 'lamp' && !cor && this.theme.lampOn) {
+      const g = ctx.createRadialGradient(dw * 0.16, -dh * 0.86, 4, dw * 0.16, -dh * 0.86, 90);
+      g.addColorStop(0, 'rgba(255,205,110,0.28)'); g.addColorStop(1, 'rgba(255,205,110,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(dw * 0.16, -dh * 0.86, 90, 0, TAU); ctx.fill();
+    }
+    return true;
+  }
+
   drawProps(ctx, camX, camY, layer) {
     for (const p of this.props) {
       if ((p.layer || 2) !== layer) continue;
@@ -748,6 +793,7 @@ class Scene {
       if (layer === 0) ctx.globalAlpha = 0.85;
       const th = this.theme;
       const cor = p.corrupted !== undefined ? p.corrupted : th.corrupted;
+      if (this.drawImgProp(ctx, p, cor)) { ctx.restore(); continue; }
       switch (p.type) {
         case 'house': Props.house(ctx, p.seed || 1, cor); break;
         case 'shop': Props.shop(ctx, p.seed || 1, cor, p.label); break;

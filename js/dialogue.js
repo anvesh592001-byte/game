@@ -121,6 +121,7 @@ const CINEMATICS = {
     { who: 'ravi', text: '...gaali. Gaali direction okkasari ga marindi.', emo: 'worry' },
   ],
   lv7_start: [
+    { action: 'img', img: 'cine_storm', t: 4.2, zoomFrom: 1.0, zoomTo: 1.12, panFrom: 0.5, panTo: 0.44 },
     { narrator: 'LEVEL 7 — THE STRANGE STORM' },
     { action: 'fx', fx: 'storm' },
     { who: 'kiran', text: 'Sky chudandi... clouds circle ga tirugutunnayi. Temple meeda.', emo: 'fear' },
@@ -129,6 +130,7 @@ const CINEMATICS = {
     { action: 'fx', fx: 'shadowSpawn' },
     { who: 'ravi', text: 'ADITYA. VENAKA. AA SHADOWS... AVI KADULUTUNNAYI.', emo: 'fear' },
     { who: 'aditya', text: 'Andaru daggara undandi. Edi ayina sare... manam kalisi untam.', emo: 'determined' },
+    { action: 'imgClear' },
   ],
   lv7_end: [
     { who: 'arjun', text: 'Bro avi... avi asalu em anavi?! Nenu punch chesa, smoke laga vachindi!', emo: 'fear' },
@@ -239,6 +241,7 @@ const CINEMATICS = {
     { who: 'aditya', text: 'Vaadu vastadu. Manam ready ga undali.', emo: 'determined' },
   ],
   lv16_start: [
+    { action: 'img', img: 'cine_confront', t: 4.5, zoomFrom: 1.05, zoomTo: 1.16, panFrom: 0.4, panTo: 0.6 },
     { narrator: 'LEVEL 16 — FIRST CONFRONTATION' },
     { action: 'fx', fx: 'vyoAppear' },
     { who: VYO, text: 'Naluguru pillalu... devuni chinna sparks pattukuni... naa mundu nilabaddaru.', emo: 'neutral' },
@@ -248,6 +251,7 @@ const CINEMATICS = {
     { who: VYO, text: 'Friendship meeda nammakam aa?', emo: 'neutral' },
     { action: 'wait', t: 1.2 },
     { who: VYO, text: 'Let us see how long it survives.', emo: 'neutral' },
+    { action: 'imgClear' },
   ],
   lv16_defeat: [
     { action: 'fx', fx: 'flashPurple' },
